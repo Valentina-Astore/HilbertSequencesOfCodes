@@ -1,4 +1,4 @@
-// Paramenters of a [n,k]_{q^m/q} rank-metric code
+// Paramenters defining an [n,k]_{q^m/q} linear (rank-metric) code
 q := ;
 m := ;
 n := ;
