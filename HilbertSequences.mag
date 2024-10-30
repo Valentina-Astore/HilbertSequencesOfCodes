@@ -1,0 +1,117 @@
+// Paramenters of a [n,k]_{q^m/q} rank-metric code
+q := ;
+m := ;
+n := ;
+k := ;
+pow := q+1;
+F<alpha>:=GF(q^m);
+
+
+/* Inputs: (ModTupFldElt) vector x
+           (ModTupFldElt) vector y
+   Output: (ModTupFldElt) component-wise product between x and y
+*/
+StarProduct:=function(x,y);
+    X:=Eltseq(x);
+    Y:=Eltseq(y);
+    for i in [1..#X] do
+        X[i]:=X[i]*Y[i];
+    end for;
+    return VectorSpace(F,#X)!X;
+end function;
+
+
+/* Inputs: (LinearCode) linear code C
+           (LinearCode) linear code D
+   Output: (LinearCode) Schur product between C and C
+*/
+SchurProduct:=function(C,D);
+    BC:=Basis(C);
+    BD:=Basis(D);
+    G:={};  // Set of generators of C*D
+    for i in [1..#BC] do
+        for j in [1..#BD] do
+            G:=G join {StarProduct(BC[i],BD[j])};
+        end for;    
+    end for;
+    return LinearCode<Field(C),Length(C)|G>;
+end function;
+
+
+/* Inputs: (LinearCode) linear code C
+           (Integer) positive integer e
+   Output: (LinearCode) e-th Schur power of C
+*/
+SchurPower:=function(C,e);
+    C1:=C;
+    for n in [1..e-1] do
+        C1:=SchurProduct(C,C1);
+    end for;
+    return C1; 
+end function;
+
+
+/* Input:  (LinearCode) linear code C
+   Output: (Integer) Castelnuovo-Mumford regularity of the dimension sequence of C
+*/
+CM_Regularity:=function(C);
+    C1:=C;
+    temp := C;
+    reg := 1;
+    printf "[%o", Dimension(C1);
+    repeat
+        temp := C1;
+        reg +:= 1;
+        C1:=SchurProduct(C,C1);
+        printf ", %o", Dimension(C1);
+    until Dimension(temp) eq Dimension(C1);
+    printf ",%o]\n", Dimension(temp);
+    return reg-1;
+end function;
+
+
+/* Input:  (LinearCode) linear code C
+   Output: (LinearCode) a linear Hamming-metric code associated to C
+*/
+AssociatedHammingCode:=function(C);
+    BaseField:=GF(Characteristic(Field(C)));
+    G:=GeneratorMatrix(C);
+    V:=VectorSpace(BaseField,Length(C));
+    return LinearCode(HorizontalJoin([G*Matrix(Field(C),Length(C),1,ElementToSequence(v)):v in V|v ne 0]));
+end function;
+
+
+
+// Gabidulin code construction
+G:=LinearCode(Matrix(F,k,n,[[(alpha^i)^(q^j):i in [0..n-1]]:j in [0..k-1]]));
+
+// Random code contruction
+I:=IdentityMatrix(F,k);
+GM:=HorizontalJoin(I, Matrix(F,k,n-k,[[Random(F) : _ in [1..n-k]] : _ in [1..k]]));
+R:=LinearCode(GM);
+
+// Extended codes
+GH:=AssociatedHammingCode(G);
+RH:=AssociatedHammingCode(R);
+
+
+CM_Regularity(RH);
+CM_Regularity(GH);
+
+
+
+
+
+// Results used to construct the graphs
+
+// q=2
+// n=m= 8
+// k= 4
+// [4, 10, 20, 35, 56, 84, 116, 150, 185, 220, 244, 251, 254, 255, 255, 255]
+// [4, 10, 17, 24, 31, 38, 45, 52, 59, 66, 73, 80, 87, 94, 101, 108, 115, 122, 129, 136, 143, 150, 157, 164, 171, 178, 185, 192, 199, 206, 213, 220, 227, 234, 241, 248, 253, 255, 255, 255]
+
+// q=3
+// n=m= 7
+// k= 5
+// [5, 15, 35, 67, 112, 170, 241, 325, 422, 529, 641, 749, 840, 914, 975, 1022, 1056, 1077, 1088, 1092, 1093, 1093,1093]
+// [5, 15, 35, 64, 100, 139, 179, 219, 259, 299, 339, 379, 419, 459, 499, 539, 579, 619, 659, 699, 739, 779, 819, 859, 899, 939, 979, 1017, 1050, 1074, 1087, 1092, 1093, 1093,1093]
