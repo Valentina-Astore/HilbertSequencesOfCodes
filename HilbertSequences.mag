@@ -1,4 +1,4 @@
-// Parameters for defining an [n, k]_{q^m/q} linear (rank-metric) code
+// Parameters for defining an [n, k]_{q^m/q} linear code
 q := ;
 m := ;
 n := ;
