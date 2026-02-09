@@ -7,7 +7,7 @@ This repository contains **Magma implementations** supporting the experimental r
 **Valentina Astore, Martino Borello, Marco Calderini, Flavio Salizzoni,**
 *“A Geometric Invariant of Linear Rank-Metric Codes”* (2024).
 
-The goal of these scripts is to study **$\mathbb{F}_q$-dimension sequences** (also called *Hilbert sequences*) and the **Castelnuovo–Mumford regularity** of linear codes by analyzing the **Schur powers** of their **associated Hamming-metric codes**.
+The goal of these scripts is to study **Hilbert sequences**and the **Castelnuovo–Mumford regularity** of linear codes.
 
 Two related but distinct experimental settings are covered:
 
