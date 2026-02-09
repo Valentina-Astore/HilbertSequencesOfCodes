@@ -1,0 +1,185 @@
+// ---------------- GLOBAL PARAMETERS ---------------- //
+
+q := ;                    // Base field size
+m := ;                    // Extension degree
+k := ;                    // Code dimension
+
+F<alpha> := GF(q^m);       // Extension field
+
+N := [m, m, m];            // Block lengths (sum-rank blocks)
+t := #N;                   // Number of blocks
+n := &+N;                  // Total length
+
+
+// ============================================================
+//                      BASIC FUNCTIONS
+// ============================================================
+
+/*
+ * Schur product of two linear codes
+ */
+SchurProduct := function(C, D)
+    BC := Basis(C);
+    BD := Basis(D);
+    G := {};
+    for u in BC do
+        for v in BD do
+            Include(~G, u * v);
+        end for;
+    end for;
+    return LinearCode<Field(C), Length(C) | G>;
+end function;
+
+
+/*
+ * e-th Schur power of a code
+ */
+SchurPower := function(C, e)
+    C1 := C;
+    for i in [1..e-1] do
+        C1 := SchurProduct(C, C1);
+    end for;
+    return C1;
+end function;
+
+
+/*
+ * Castelnuovo–Mumford regularity
+ */
+CM_Regularity := function(C)
+    C1 := C;
+    prev := C;
+    reg := 1;
+
+    printf "[1, %o,", Dimension(C1);
+
+    repeat
+        prev := C1;
+        reg +:= 1;
+        C1 := SchurProduct(C, C1);
+        printf " %o,", Dimension(C1);
+    until Dimension(prev) eq Dimension(C1);
+
+    printf " %o], %o\n", Dimension(prev), reg - 1;
+    return reg - 1;
+end function;
+
+
+// ============================================================
+//     ASSOCIATED HAMMING-METRIC CODE CONSTRUCTION
+// ============================================================
+
+/*
+ * Associated Hamming code from a list of block generators
+ *
+ * Input:
+ *   seq = [G1, ..., Gt], where each Gi is a list of k vectors
+ *         in F^{N[i]}
+ *
+ */
+AssociatedHammingCode := function(seq)
+
+    // First block
+    len := #seq[1][1];
+    dim := #seq[1];
+    G := Matrix(F, dim, len, seq[1]);
+
+    V := VectorSpace(GF(q), len);
+    GM := HorizontalJoin([
+        G * Matrix(F, len, 1, ElementToSequence(v))
+        : v in V | v ne 0
+    ]);
+
+    // Remaining blocks
+    for i in [2..#seq] do
+        len := #seq[i][1];
+        dim := #seq[i];
+        G := Matrix(F, dim, len, seq[i]);
+
+        V := VectorSpace(GF(q), len);
+        GM := HorizontalJoin(
+            GM,
+            HorizontalJoin([
+                G * Matrix(F, len, 1, ElementToSequence(v))
+                : v in V | v ne 0
+            ])
+        );
+    end for;
+
+    return LinearCode(GM);
+end function;
+
+
+// ============================================================
+//                  LINEARIZED REED–SOLOMON (LRS)
+// ============================================================
+
+print "\n==== LINEARIZED REED–SOLOMON CODES ====";
+
+// Choose multipliers with distinct norms
+repeat
+    a := [Random(F) : _ in [1..t]];
+    norms := { Norm(a[i], GF(q)) : i in [1..t] };
+until #norms eq t;
+
+GLRS := [];
+
+for i in [1..t] do
+
+    // Choose evaluation points GF(q)-linearly independent
+    repeat
+        b := [Random(F) : _ in [1..N[i]]];
+        Mb := Matrix(GF(q), [Eltseq(b[j]) : j in [1..#b]]);
+    until Rank(Mb) eq N[i];
+
+    block := [b];
+    for j in [1..k-1] do
+        Append(~block, [(block[j][h]^q) * a[i] : h in [1..#b]]);
+    end for;
+
+    Append(~GLRS, block);
+end for;
+
+// Associated Hamming code
+RH_LRS := AssociatedHammingCode(GLRS);
+
+print "LRS code:";
+rLRS := CM_Regularity(RH_LRS);
+
+
+// ============================================================
+//                  MULTI-BLOCK GABIDULIN
+// ============================================================
+
+print "\n==== MULTI-BLOCK GABIDULIN CODES ====";
+
+// Generator matrix
+G0 := Matrix(F, k, m,
+    [[(alpha^i)^(q^j) : i in [0..m-1]] : j in [0..k-1]]
+);
+
+// Random GF(q)-invertible transformations
+repeat
+    A2 := RandomMatrix(GF(q), k, k);
+until Rank(A2) eq k;
+
+repeat
+    A3 := RandomMatrix(GF(q), k, k);
+until Rank(A3) eq k and A3 ne A2;
+
+G1 := ChangeRing(A2, F) * G0;
+G2 := ChangeRing(A3, F) * G0;
+
+// Block generators
+GR_Gab := [
+    [[G0[i][j] : j in [1..m]] : i in [1..k]],
+    [[G1[i][j] : j in [1..m]] : i in [1..k]],
+    [[G2[i][j] : j in [1..m]] : i in [1..k]]
+];
+
+// Associated Hamming code
+RH_Gab := AssociatedHammingCode(GR_Gab);
+
+printf "q=%o, k=%o, m=%o, blocks=%o\n", q, k, m, t;
+print "Block-Gabidulin code:";
+rGab := CM_Regularity(RH_Gab);
