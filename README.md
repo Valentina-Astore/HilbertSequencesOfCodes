@@ -4,8 +4,7 @@
 
 This repository contains Magma implementations of the experiments described in the paper:
 
-**Valentina Astore, Martino Borello, Marco Calderini, Flavio Salizzoni,**  
-*A geometric invariant of linear rank-metric codes*. SIAM Journal on Applied Algebra and Geometry 9.4 (2025): 741-764 
+**V. Astore, M. Borello, M. Calderini and F. Salizzoni**, *A geometric invariant of linear rank-metric codes*. SIAM Journal on Applied Algebra and Geometry 9.4 (2025): 741-764 
 
 ---
 
