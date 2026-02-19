@@ -74,7 +74,7 @@ CM_Regularity(RH);
 
 This file extends the experimental framework to the **sum-rank metric** setting.
 
-The aim is to study the **Fq-dimension sequences** (Hilbert sequences) and the **Castelnuovo–Mumford regularity** of Linearized Reed-Solomon codes versus multi-block "random" Gabidulin codes, by analyzing the Schur powers of their associated Hamming-metric codes.
+The aim is to study the **Fq-dimension sequences** (Hilbert sequences) and the **Hilbert regularity** of Linearized Reed-Solomon codes versus multi-block "random" Gabidulin codes, by analyzing the Schur powers of their associated Hamming-metric codes.
 
 ## Contents
 
