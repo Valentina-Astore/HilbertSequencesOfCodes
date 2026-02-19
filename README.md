@@ -89,16 +89,14 @@ The script implements:
 ### Code Constructions
 
 - **Linearized Reed–Solomon (LRS) codes**  
-  - Blocks with GF(q)-linearly independent evaluation points  
-  - Multipliers with distinct non-zero norms  
+  - Blocks with Fq-linearly independent evaluation points
+  - Block multipliers with distinct non-zero norms
   - Construction via successive Frobenius powers
 
 - **Multi-block Gabidulin codes**  
-  - Each block obtained from a Moore matrix  
-  - Independent GF(q)-invertible transformations per block  
-  - Natural sum-rank analogue of Gabidulin constructions
+  - Concatenation of "random" Gabidulin codes
 
-For both constructions, the associated Hamming-metric code is built and its Hilbert sequence and Castelnuovo–Mumford regularity are computed.
+For both constructions, the associated Hamming-metric code is built and its Hilbert sequence and Hilbert regularity are computed.
 
 ### Parameters
 
@@ -106,7 +104,7 @@ In this file, the global parameters are:
 
 - `q` — base field size  
 - `m` — extension degree  
-- `k` — dimension  
+- `k` — codes dimension  
 - `N = [N1, ..., Nt]` — block lengths  
 - `t` — number of blocks  
 - `n = N1 + ... + Nt` — total length
@@ -125,9 +123,6 @@ Then load and run:
 ```magma
 > load "HilbertSequencesSumRank.mag";
 ```
-
-The script automatically constructs LRS and multi-block Gabidulin codes and prints their Hilbert sequences and regularities.
-
 ---
 
 ## Dependencies
