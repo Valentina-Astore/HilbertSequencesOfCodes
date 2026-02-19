@@ -5,8 +5,9 @@ m := ;                    // Extension degree
 k := ;                    // Code dimension
 
 F<alpha> := GF(q^m);       // Extension field
+Fq := GF(q);               // Base field
 
-N := [m, m, m];            // Block lengths (sum-rank blocks)
+N := [];                   // Block lengths (sum-rank blocks)
 t := #N;                   // Number of blocks
 n := &+N;                  // Total length
 
@@ -21,6 +22,7 @@ n := &+N;                  // Total length
 SchurProduct := function(C, D)
     BC := Basis(C);
     BD := Basis(D);
+    
     G := {};
     for u in BC do
         for v in BD do
@@ -29,7 +31,6 @@ SchurProduct := function(C, D)
     end for;
     return LinearCode<Field(C), Length(C) | G>;
 end function;
-
 
 /*
  * e-th Schur power of a code
@@ -72,10 +73,7 @@ end function;
 /*
  * Associated Hamming code from a list of block generators
  *
- * Input:
- *   seq = [G1, ..., Gt], where each Gi is a list of k vectors
- *         in F^{N[i]}
- *
+ * Input: seq = [G1, ..., Gt], where each Gi is a list of k vectors in F^{N[i]}
  */
 AssociatedHammingCode := function(seq)
 
@@ -84,7 +82,7 @@ AssociatedHammingCode := function(seq)
     dim := #seq[1];
     G := Matrix(F, dim, len, seq[1]);
 
-    V := VectorSpace(GF(q), len);
+    V := VectorSpace(Fq, len);
     GM := HorizontalJoin([
         G * Matrix(F, len, 1, ElementToSequence(v))
         : v in V | v ne 0
@@ -96,7 +94,7 @@ AssociatedHammingCode := function(seq)
         dim := #seq[i];
         G := Matrix(F, dim, len, seq[i]);
 
-        V := VectorSpace(GF(q), len);
+        V := VectorSpace(Fq, len);
         GM := HorizontalJoin(
             GM,
             HorizontalJoin([
@@ -110,26 +108,33 @@ AssociatedHammingCode := function(seq)
 end function;
 
 
+printf "q=%o, k=%o, m=%o, blocks=%o\n", q, k, m, t;
+
 // ============================================================
 //                  LINEARIZED REED–SOLOMON (LRS)
 // ============================================================
 
 print "\n==== LINEARIZED REED–SOLOMON CODES ====";
 
-// Choose multipliers with distinct norms
+// Choose multipliers with distinct non-zero norms
 repeat
-    a := [Random(F) : _ in [1..t]];
-    norms := { Norm(a[i], GF(q)) : i in [1..t] };
-until #norms eq t;
+    a := [];
+    for i in [1..#N] do
+        repeat
+            elt := Random(F);
+        until elt ne 0;
+        Append(~a, elt);
+    end for;
+until #{ Norm(x, Fq) : x in a } eq t;
 
 GLRS := [];
 
 for i in [1..t] do
 
-    // Choose evaluation points GF(q)-linearly independent
+    // Choose evaluation points Fq-linearly independent
     repeat
         b := [Random(F) : _ in [1..N[i]]];
-        Mb := Matrix(GF(q), [Eltseq(b[j]) : j in [1..#b]]);
+        Mb := Matrix(Fq, [Eltseq(b[j]) : j in [1..#b]]);
     until Rank(Mb) eq N[i];
 
     block := [b];
@@ -148,38 +153,49 @@ rLRS := CM_Regularity(RH_LRS);
 
 
 // ============================================================
-//                  MULTI-BLOCK GABIDULIN
+//                  MULTI-BLOCK GABIDULIN CODES
 // ============================================================
 
 print "\n==== MULTI-BLOCK GABIDULIN CODES ====";
 
-// Generator matrix
+/*
+ * Each block is a Gabidulin code obtained by applying
+ * a random Fq-invertible linear transformation
+ * to a fixed standard generator matrix.
+ *
+ * Assumption: all blocks have length m (i.e. N[i] = m).
+ */
+
+// Standard Gabidulin generator matrix
 G0 := Matrix(F, k, m,
-    [[(alpha^i)^(q^j) : i in [0..m-1]] : j in [0..k-1]]
+    [[ (alpha^i)^(q^j) : i in [0..m-1] ] : j in [0..k-1]]
 );
 
-// Random GF(q)-invertible transformations
-repeat
-    A2 := RandomMatrix(GF(q), k, k);
-until Rank(A2) eq k;
 
-repeat
-    A3 := RandomMatrix(GF(q), k, k);
-until Rank(A3) eq k and A3 ne A2;
+GR_Gab := [];
+for block_index in [1..t] do
 
-G1 := ChangeRing(A2, F) * G0;
-G2 := ChangeRing(A3, F) * G0;
+    if block_index eq 1 then
+        Gblock := G0;
+    else
+        // Sample random invertible matrix over Fq
+        repeat
+            A := RandomMatrix(Fq, k, k);
+        until Rank(A) eq k;
 
-// Block generators
-GR_Gab := [
-    [[G0[i][j] : j in [1..m]] : i in [1..k]],
-    [[G1[i][j] : j in [1..m]] : i in [1..k]],
-    [[G2[i][j] : j in [1..m]] : i in [1..k]]
-];
+        Gblock := ChangeRing(A, F) * G0;
+    end if;
 
-// Associated Hamming code
+    // Store block as list of row vectors
+    Append(~GR_Gab,
+        [[Gblock[i][j] : j in [1..m]] : i in [1..k]]
+    );
+
+end for;
+
+
+// Associated Hamming-metric code
 RH_Gab := AssociatedHammingCode(GR_Gab);
 
-printf "q=%o, k=%o, m=%o, blocks=%o\n", q, k, m, t;
-print "Block-Gabidulin code:";
+print "Multi-block Gabidulin code:";
 rGab := CM_Regularity(RH_Gab);
