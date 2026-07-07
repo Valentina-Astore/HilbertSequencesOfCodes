@@ -178,12 +178,7 @@ for block_index in [1..t] do
     if block_index eq 1 then
         Gblock := G0;
     else
-        // Sample random invertible matrix over Fq
-        repeat
-            A := RandomMatrix(Fq, k, k);
-        until Rank(A) eq k;
-
-        Gblock := ChangeRing(A, F) * G0;
+        Gblock := Random(GL(k, F)) * G0;
     end if;
 
     // Store block as list of row vectors
